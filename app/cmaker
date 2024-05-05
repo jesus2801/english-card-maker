@@ -1,0 +1,61 @@
+#!env/bin/python3
+from pynput import mouse, keyboard
+from selenium import webdriver
+import argparse
+import atexit
+import shutil
+import time
+import os
+
+import constants as c
+import scrapping
+
+global words_added
+global file
+words_added = 0
+
+
+@atexit.register
+def on_exit():
+  temp = f'{file}.temp'
+
+  with open(temp, 'w') as write_stream:
+    with open(file, 'r') as read_stream:
+      for line in read_stream:
+        words_added -= 1
+        if words_added < 0:
+          write_stream.write(line)
+
+  source_file = open(temp, 'rb')
+  destination_file = open(file, 'wb')
+  shutil.copyfileobj(source_file, destination_file)
+  os.remove(temp)
+
+
+def run():
+  parser = argparse.ArgumentParser(prog=c.name, description=c.desc, epilog=c.epilog)
+  parser.add_argument('-f', '--file', dest='file', required=True, type=str, help=c.input)
+  args = parser.parse_args()
+
+  if not os.path.isfile(args.file):
+    parser.error('--file flag is not an existing file')
+
+  global file
+  file = args.file.replace('~', os.path.expanduser('~'))
+
+  dr = webdriver.Chrome()
+  dr.get('https://google.com')
+
+  m = mouse.Controller()
+  k = keyboard.Controller()
+  time.sleep(2)
+
+  with open(file, 'r') as file:
+    for line in file:
+      l = line.strip()
+      scrapping.createCard(l, dr, m, k)
+      words_added += 1
+
+
+if __name__ == '__main__':
+  run()
