@@ -1,24 +1,25 @@
 #!env/bin/python3
-from pynput import mouse, keyboard
-from selenium import webdriver
-import argparse
-import atexit
-import shutil
-import time
+from pynput import mouse, keyboard # control over mouse and keyboard
+from selenium import webdriver # chrome managment 
+import argparse # parse CLI arguments
+import atexit # handle exit event
+import shutil # file managment
+import time # for sleeping the program when needed
 import os
 
 import constants as c
 import scrapping
 
-global words_added
-global file
+global words_added # counter of words that has been added to Anki
+global file # file path
 words_added = 0
 
 
 @atexit.register
 def on_exit():
-  temp = f'{file}.temp'
+  temp = f'{file}.temp' # temp path
 
+  # writes in temp the lines that could not be able to be added to anki
   with open(temp, 'w') as write_stream:
     with open(file, 'r') as read_stream:
       for line in read_stream:
@@ -26,35 +27,45 @@ def on_exit():
         if words_added < 0:
           write_stream.write(line)
 
+  # finally, copy the content from temp into the original file
   source_file = open(temp, 'rb')
   destination_file = open(file, 'wb')
   shutil.copyfileobj(source_file, destination_file)
+  # removes temp
   os.remove(temp)
 
 
 def run():
+  # starts parser instance
   parser = argparse.ArgumentParser(prog=c.name, description=c.desc, epilog=c.epilog)
   parser.add_argument('-f', '--file', dest='file', required=True, type=str, help=c.input)
   args = parser.parse_args()
 
+  # verifies the existance of the given file path
   if not os.path.isfile(args.file):
     parser.error('--file flag is not an existing file')
 
+  # replacing the home dir
   global file
   file = args.file.replace('~', os.path.expanduser('~'))
 
+  # starts Chrome instance
   dr = webdriver.Chrome()
+  # opens Google
   dr.get('https://google.com')
 
+  # mouse and key controllers
   m = mouse.Controller()
   k = keyboard.Controller()
+  # sleep 2 seconds before start
   time.sleep(2)
 
+  # for each line in the file, execute the scrapping
   with open(file, 'r') as file:
     for line in file:
-      l = line.strip()
+      l = line.strip() # deletes spaces at the beginning and end of the line
       scrapping.createCard(l, dr, m, k)
-      words_added += 1
+      words_added += 1 # increments the words counter
 
 
 if __name__ == '__main__':

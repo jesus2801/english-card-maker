@@ -1,54 +1,56 @@
-from selenium.webdriver import Chrome
-from pynput import keyboard, mouse
-from pathlib import Path
-import requests
-import time
-from typing import Tuple, Any
+from selenium.webdriver import Chrome # for typing in parameters
+from pynput import keyboard, mouse # for typing and constants
+from typing import Tuple, Any # for typing
+from pathlib import Path # for home dir
+import requests # for handling requests
+import time # for sleeping the program when needed
 
-global pause
+global pause # this variable helps to know if the program should continue or not
 pause = False
 
 
-def on_press(key: Any):
+def on_press(key: Any): # when '1' is pressed, then go to the next step
   if str(key)[1] == "1":
     global pause
     pause = False
 
-
+# makes focus on specific point
 def focus(m: mouse.Controller, position: Tuple[int, int]):
-  m.position = position
-  m.press(mouse.Button.left)
-  m.release(mouse.Button.left)
+  m.position = position # moves the mouse to the position
+  m.press(mouse.Button.left) # press left click
+  m.release(mouse.Button.left) # release left click
 
 
+# makes a pause until variables 'pause' has changed
 def make_pause():
   global pause
   pause = True
   while pause:
     pass
 
-
+# makes a ctrl + v command
 def CtrlV(m: mouse.Controller, k: keyboard.Controller, position: Tuple[int, int]):
-  focus(m, position)
-  time.sleep(0.5)
+  focus(m, position) # focus the input
+  time.sleep(0.5) # some time while focusing
+  # pressing ctrl + v
   k.press(keyboard.Key.ctrl.value)
   k.press('v')
   k.release('v')
   k.release(keyboard.Key.ctrl.value)
 
 
-def open_window(dr: Chrome, url: str):
+def open_window(dr: Chrome, url: str): # opens a new window
   dr.execute_script(f'window.open("{url}")')
 
 
-def switch_window(dr: Chrome):
+def switch_window(dr: Chrome): # switch to the last window
   dr.switch_to.window(dr.window_handles[-1])
 
 
 def createCard(word: str, dr: Chrome, m: mouse.Controller, k: keyboard.Controller):
   # STEP 1 -- Write the word on Anki
   focus(m, (2444, 375))
-  time.sleep(1)  # some time while focusing input
+  time.sleep(0.5)  # some time while focusing input
   k.type(word)
 
   # STEP 2 -- Open translators for meanings
@@ -56,78 +58,90 @@ def createCard(word: str, dr: Chrome, m: mouse.Controller, k: keyboard.Controlle
   open_window(dr, f'https://translate.google.com/?hl=es&sl=en&tl=es&text={word}&op=translate')
 
   l = keyboard.Listener(on_press=on_press)
-  l.start()
+  l.start() # starts keyboard listener
 
   # STEP 3 -- Write the meaning (manually)
   make_pause()
 
-  # closing the translator
+  # STEP 4 -- Close the translators
   switch_window(dr)
   dr.close()
   switch_window(dr)
   dr.close()
 
-  # STEP 4 -- Write the word on ChatGPT
-  time.sleep(2)
+  # STEP 5 -- Write the word on ChatGPT
+  time.sleep(2) # some time while closing translators tabs
 
-  focus(m, (780, 980))
-  time.sleep(0.2)
+  focus(m, (780, 980)) # focuses the ChatGPT input
+  time.sleep(0.2) # some time while focusing input
   k.type(f'word: {word}')
   k.press(keyboard.Key.enter.value)
   k.release(keyboard.Key.enter.value)
 
-  # pause while ChatGPT process the result, then copy IPA
+  # pause while ChatGPT processes the result
   make_pause()
 
+  # STEP 6 -- Write the IPA, example, example meaning and synonyms on Anki
+
+  # focuses Anki Tab
   focus(m, (2440, 490))
-  time.sleep(0.3)
-  m.scroll(0, -10)
-  time.sleep(0.5)
+  time.sleep(0.3) # some time while focusing Anki tab
+  m.scroll(0, -10) # scroll down
+  time.sleep(0.5) # some time while scrolling
 
-  CtrlV(m, k, (2440, 490))  # IPA
-  make_pause()
+  CtrlV(m, k, (2440, 490))  # pastes IPA in its corresponding field
+  make_pause() # pause while copying example
 
-  CtrlV(m, k, (2440, 572))  # example
-  make_pause()
+  CtrlV(m, k, (2440, 572))  # pastes example in its corresponding field
+  make_pause() # pause while copying example meaning
 
-  CtrlV(m, k, (2440, 640))  # example meaning
-  make_pause()
+  CtrlV(m, k, (2440, 640))  # pastes example meaning in its corresponding field
+  make_pause() # pause thile copying synonyms
 
-  CtrlV(m, k, (2440, 720))  # synonyms
-  make_pause()
+  CtrlV(m, k, (2440, 720))  # pastes the synonyms in its corresponding field
+  time.sleep(1)
+
+  # STEP 7 - look for image and audio for the card
 
   switch_window(dr)
-  open_window(dr, f'https://www.google.com/search?q={word}&udm=2')
+  open_window(dr, f'https://www.google.com/search?q={word}&udm=2') # opens image results
 
-  sw = False
+  sw = False # bool to know if the mp3 could not be downloaded
+  # makes the requests to Google for the pronunciation of the word
   r = requests.get(f'https://ssl.gstatic.com/dictionary/static/pronunciation/2022-03-02/audio/{word[:2]}/{word}_en_us_1.mp3')
-  if r.status_code == 200:
+  if r.status_code == 200: # if status is 200, then write the file into Downdloads
     with open(f'{Path.home()}/Downloads/{word}_en_us_1.mp3', 'wb') as file_stream:
       file_stream.write(r.content)
       print(f'mp3 file of word: {word} downloaded succesfully')
-  else:
+  else: # if mp3 could not be downloaded, then search for audios on the web
     sw = True
     print(f'Failed to download mp3 file from Google - Word: {word}')
     open_window(dr, f'https://www.google.com/search?q={word}+pronunciation+in+english')
 
-  make_pause()
+  make_pause() # pause while choosing image and audio
+
+  # STEP 8 -- closing image and audio tabs
 
   switch_window(dr)
   dr.close()
-  if sw:
+  if sw: # closing audio tab only if it was created
     dr._switch_to.window(dr.window_handles[-1])
     dr.close()
 
-  switch_window()
+  switch_window() # switch to ChatGPT window again
 
-  focus(m, (2440, 572))  # example
-  time.sleep(0.5)
+  # STEP 9 -- Add the card to the deck
+
+  focus(m, (2440, 572))  # focus example field (it could be any part of the anki window)
+  time.sleep(0.5) # some time while focusing
+  # pressing ctrl + Enter for adding the card
   k.press(keyboard.Key.ctrl.value)
   k.press(keyboard.Key.enter.value)
   k.release(keyboard.Key.enter.value)
   k.release(keyboard.Key.ctrl.value)
 
-  time.sleep(0.2)
-  m.scroll(0, 10)
+  time.sleep(0.2) # some time while saving the card
+  m.scroll(0, 10) # scroll up to the first field again
+  l.stop() # stops keyboard listener
 
-  time.sleep(1)
+  time.sleep(1) # sleeps 1 second before next word
