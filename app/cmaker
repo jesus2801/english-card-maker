@@ -8,6 +8,7 @@ import time  # for sleeping the program when needed
 import os
 
 import constants as c
+import scrapping
 
 f = '' # file name
 words_added = 0 # number of words added to Anki
@@ -67,7 +68,7 @@ def run():
   with open(f, 'r') as file_stream:
     for line in file_stream:
       l = line.strip()  # deletes spaces at the beginning and end of the line
-      # scrapping.createCard(l, dr, m, k)
+      scrapping.createCard(l, dr, m, k)
       time.sleep(1)
       global words_added
       words_added += 1  # increments the words counter

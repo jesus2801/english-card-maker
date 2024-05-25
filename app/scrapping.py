@@ -2,9 +2,10 @@ from selenium.webdriver import Chrome  # for typing in parameters
 from pynput import keyboard, mouse  # for typing and constants
 from typing import Tuple, Any  # for typing
 from pathlib import Path  # for home dir
+import constants
+import platform
 import requests  # for handling requests
 import time  # for sleeping the program when needed
-import platform
 
 global pause  # this variable helps to know if the program should continue or not
 pause = False
@@ -37,13 +38,13 @@ def make_pause():
 # makes a ctrl + v command
 
 
-def CtrlV(m: mouse.Controller, k: keyboard.Controller, position: Tuple[int, int]):
+def hotKey(m: mouse.Controller, k: keyboard.Controller, position: Tuple[int, int], key: str | keyboard.Key | keyboard.KeyCode):
   focus(m, position)  # focus the input
   time.sleep(0.5)  # some time while focusing
   # pressing ctrl + v
   k.press(CTRL_VALUE)
-  k.press('v')
-  k.release('v')
+  k.press(key)
+  k.release(key)
   k.release(CTRL_VALUE)
 
 
@@ -57,7 +58,7 @@ def switch_window(dr: Chrome):  # switch to the last window
 
 def createCard(word: str, dr: Chrome, m: mouse.Controller, k: keyboard.Controller):
   # STEP 1 -- Write the word on Anki
-  focus(m, (2444, 375))
+  focus(m, constants.positions["word"])
   time.sleep(0.5)  # some time while focusing input
   k.type(word)
 
@@ -80,7 +81,7 @@ def createCard(word: str, dr: Chrome, m: mouse.Controller, k: keyboard.Controlle
   # STEP 5 -- Write the word on ChatGPT
   time.sleep(2)  # some time while closing translators tabs
 
-  focus(m, (780, 980))  # focuses the ChatGPT input
+  focus(m, constants.positions["chatgpt"])  # focuses the ChatGPT input
   time.sleep(0.2)  # some time while focusing input
   k.type(f'word: {word}')
   k.press(keyboard.Key.enter.value)
@@ -92,21 +93,23 @@ def createCard(word: str, dr: Chrome, m: mouse.Controller, k: keyboard.Controlle
   # STEP 6 -- Write the IPA, example, example meaning and synonyms on Anki
 
   # focuses Anki Tab
-  focus(m, (2440, 490))
+  focus(m, constants.positions["IPA"])
   time.sleep(0.3)  # some time while focusing Anki tab
   m.scroll(0, -10)  # scroll down
   time.sleep(0.5)  # some time while scrolling
 
-  CtrlV(m, k, (2440, 490))  # pastes IPA in its corresponding field
+  hotKey(m, k, constants.positions["IPA"], 'v')  # pastes IPA in its corresponding field
   make_pause()  # pause while copying example
 
-  CtrlV(m, k, (2440, 572))  # pastes example in its corresponding field
+  hotKey(m, k, constants.positions["example"], 'v')  # pastes example in its corresponding field
   make_pause()  # pause while copying example meaning
 
-  CtrlV(m, k, (2440, 640))  # pastes example meaning in its corresponding field
+  # pastes example meaning in its corresponding field
+  hotKey(m, k, constants.positions["meaning"], 'v')
   make_pause()  # pause thile copying synonyms
 
-  CtrlV(m, k, (2440, 720))  # pastes the synonyms in its corresponding field
+  # pastes the synonyms in its corresponding field
+  hotKey(m, k, constants.positions["synonyms"], 'v')
   time.sleep(1)
 
   # STEP 7 - look for image and audio for the card
@@ -137,11 +140,12 @@ def createCard(word: str, dr: Chrome, m: mouse.Controller, k: keyboard.Controlle
     dr._switch_to.window(dr.window_handles[-1])
     dr.close()
 
-  switch_window()  # switch to ChatGPT window again
+  switch_window(dr)  # switch to ChatGPT window again
 
   # STEP 9 -- Add the card to the deck
 
-  focus(m, (2440, 572))  # focus example field (it could be any part of the anki window)
+  # focus example field (it could be any part of the anki window)
+  focus(m, constants.positions["example"])
   time.sleep(0.5)  # some time while focusing
   # pressing ctrl + Enter for adding the card
   k.press(CTRL_VALUE)
@@ -153,4 +157,7 @@ def createCard(word: str, dr: Chrome, m: mouse.Controller, k: keyboard.Controlle
   m.scroll(0, 10)  # scroll up to the first field again
   l.stop()  # stops keyboard listener
 
-  time.sleep(1)  # sleeps 1 second before next word
+  time.sleep(0.5)  # sleeps 1 second before next word
+  # click 3 times the word input
+  focus(m, constants.positions["word"])
+  hotKey(m, k, constants.positions["word"], keyboard.Key.backspace)
