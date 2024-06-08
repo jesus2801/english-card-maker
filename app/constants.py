@@ -5,10 +5,10 @@ epilog = "For more help see README.md"
 input = "File required to read the words separeted by \n"
 
 positions = {
-  "word": (2444, 375),
-  "IPA": (2440, 490),
-  "example": (2440, 572),
-  "meaning": (2440, 640),
-  "synonyms": (2440, 720),
-  "chatgpt": (780, 980)
+  "word": (2518, 123),
+  "IPA": (2547, 282),
+  "example": (2591, 357),
+  "meaning": (2544, 428),
+  "synonyms": (2545, 509),
+  "chatgpt": (1010, 988)
 }

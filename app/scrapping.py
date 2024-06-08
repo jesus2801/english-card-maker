@@ -128,7 +128,7 @@ def createCard(word: str, dr: Chrome, m: mouse.Controller, k: keyboard.Controlle
   else:  # if mp3 could not be downloaded, then search for audios on the web
     sw = True
     print(f'Failed to download mp3 file from Google - Word: {word}')
-    open_window(dr, f'https://www.google.com/search?q={word}+pronunciation+in+english')
+    open_window(dr, 'https://www.naturalreaders.com/online/')
 
   make_pause()  # pause while choosing image and audio
 
