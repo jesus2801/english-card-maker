@@ -79,13 +79,13 @@ def createCard(word: str, dr: Chrome, m: mouse.Controller, k: keyboard.Controlle
   dr.close()
 
   # STEP 5 -- Write the word on ChatGPT
-  time.sleep(2)  # some time while closing translators tabs
+  #time.sleep(2)  # some time while closing translators tabs
 
-  focus(m, constants.positions["chatgpt"])  # focuses the ChatGPT input
-  time.sleep(0.2)  # some time while focusing input
-  k.type(f'word: {word}')
-  k.press(keyboard.Key.enter.value)
-  k.release(keyboard.Key.enter.value)
+  #focus(m, constants.positions["chatgpt"])  # focuses the ChatGPT input
+  #time.sleep(0.2)  # some time while focusing input
+  #k.type(f'word: {word}')
+  #k.press(keyboard.Key.enter.value)
+  #k.release(keyboard.Key.enter.value)
 
   # pause while ChatGPT processes the result
   make_pause()
