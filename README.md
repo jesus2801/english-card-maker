@@ -2,11 +2,6 @@
 
 This Python program helps you automate the process of gathering the information needed for a complete English word card. 
 
-## Get Started
-
-**⚠️This tutorial works on Linux⚠️**  
-If you are not on Linux, try to look for the equivalences in your OS.
-
 ## Install Chrome or Chromium
 
 Download Chrome browser or Chromium in the [official website](https://www.chromium.org/chromium-projects/)
